@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet, Sun, Moon, Database } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -17,6 +17,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { id: 'transactions', label: t('transactions'), icon: Receipt },
     { id: 'categories', label: t('categories'), icon: FolderOpen },
+    { id: 'category-crud', label: 'DB Admin', icon: Database },
     { id: 'kasbon', label: t('kasbon'), icon: HandCoins },
     { id: 'reports', label: t('reports'), icon: BarChart3 },
     { id: 'settings', label: t('settings'), icon: Settings },

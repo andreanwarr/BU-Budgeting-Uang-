@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Dashboard } from './Dashboard';
 import { CategoryManagerView } from './CategoryManagerView';
+import { CategoryCRUD } from './CategoryCRUD';
 import { KasbonManager } from './KasbonManager';
 import { Charts } from './Charts';
 import { Settings } from './Settings';
@@ -17,6 +18,8 @@ export function MainLayout() {
         return <Dashboard />;
       case 'categories':
         return <CategoryManagerView />;
+      case 'category-crud':
+        return <CategoryCRUD />;
       case 'kasbon':
         return <KasbonManager />;
       case 'reports':
