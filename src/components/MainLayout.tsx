@@ -13,8 +13,6 @@ export function MainLayout() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
-      case 'transactions':
-        return <Dashboard />;
       case 'categories':
         return <CategoryManagerView />;
       case 'kasbon':
