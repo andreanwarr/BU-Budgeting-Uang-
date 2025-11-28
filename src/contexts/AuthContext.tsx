@@ -127,20 +127,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      // If signup successful but session exists, it means email confirmation is disabled
-      // In production, this shouldn't happen with proper Supabase config
+      if (error) {
+        return {
+          error,
+          needsEmailVerification: false
+        };
+      }
+
+      // CRITICAL: If session exists, email confirmation is DISABLED in Supabase
+      // We MUST sign out immediately to enforce email verification
       if (data.session) {
-        console.warn('Email confirmation may be disabled in Supabase settings');
+        console.warn('⚠️ WARNING: Email confirmation is DISABLED in Supabase settings!');
+        console.warn('Please enable it: Authentication > Providers > Email > Enable "Confirm email"');
+
+        // Force sign out to prevent login without verification
+        await supabase.auth.signOut();
       }
 
       // Always clear any session created during signup
-      // User should only get session after email verification
+      // User should ONLY get session after email verification
       setSession(null);
       setUser(null);
 
       return {
-        error,
-        needsEmailVerification: !error && !data.session
+        error: null,
+        needsEmailVerification: true
       };
     } catch (err: any) {
       return {
@@ -169,10 +180,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
       }
 
-      // Check if email is confirmed
+      // CRITICAL: Always check if email is confirmed
+      // Even if Supabase email confirmation is disabled, we enforce it here
       if (!data.user?.email_confirmed_at) {
-        // Sign out the user immediately
+        console.warn('⚠️ User attempting to login without email verification');
+
+        // FORCE sign out the user immediately
         await supabase.auth.signOut();
+
+        // Clear local state
+        setSession(null);
+        setUser(null);
 
         // Return a custom error
         const unverifiedError: AuthError = {

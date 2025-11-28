@@ -15,26 +15,38 @@ export function AuthCallback() {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
+        const error = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
+
+        // Check if there's an error in the callback
+        if (error) {
+          throw new Error(errorDescription || error);
+        }
 
         // Check if this is an email verification callback
         if (type === 'signup' && accessToken) {
-          // Exchange the token for a session
-          const { data, error } = await supabase.auth.getSession();
+          setMessage('Memverifikasi email Anda...');
 
-          if (error) {
-            throw error;
+          // Get the session to verify
+          const { data, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError) {
+            throw sessionError;
           }
 
           if (data.session?.user?.email_confirmed_at) {
             setStatus('success');
-            setMessage('Email berhasil diverifikasi! Anda akan diarahkan ke aplikasi...');
+            setMessage('✅ Email berhasil diverifikasi!\n\nAnda akan diarahkan ke halaman login...');
 
-            // Redirect to dashboard after 2 seconds
+            // Sign out to force fresh login
+            await supabase.auth.signOut();
+
+            // Redirect to home after 3 seconds
             setTimeout(() => {
               window.location.href = '/';
-            }, 2000);
+            }, 3000);
           } else {
-            throw new Error('Verifikasi email gagal');
+            throw new Error('Verifikasi email gagal. Silakan coba lagi atau hubungi support.');
           }
         } else if (user?.email_confirmed_at) {
           // User is already verified and logged in
@@ -43,16 +55,16 @@ export function AuthCallback() {
 
           setTimeout(() => {
             window.location.href = '/';
-          }, 1000);
+          }, 1500);
         } else {
           // No valid verification token
           setStatus('error');
-          setMessage('Link verifikasi tidak valid atau sudah kedaluwarsa.');
+          setMessage('Link verifikasi tidak valid atau sudah kedaluwarsa.\n\nSilakan minta link verifikasi baru dari halaman login.');
         }
       } catch (error: any) {
         console.error('Email verification error:', error);
         setStatus('error');
-        setMessage(error.message || 'Terjadi kesalahan saat memverifikasi email.');
+        setMessage(error.message || 'Terjadi kesalahan saat memverifikasi email. Silakan coba lagi.');
       }
     };
 
@@ -79,7 +91,7 @@ export function AuthCallback() {
                 <CheckCircle className="w-12 h-12 text-emerald-600" />
               </div>
               <h2 className="text-2xl font-bold text-emerald-800 mb-2">Verifikasi Berhasil!</h2>
-              <p className="text-slate-600 mb-4">{message}</p>
+              <p className="text-slate-600 mb-4 whitespace-pre-line">{message}</p>
               <div className="w-full bg-emerald-100 rounded-full h-2">
                 <div className="bg-emerald-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
               </div>
@@ -92,7 +104,7 @@ export function AuthCallback() {
                 <XCircle className="w-12 h-12 text-red-600" />
               </div>
               <h2 className="text-2xl font-bold text-red-800 mb-2">Verifikasi Gagal</h2>
-              <p className="text-slate-600 mb-6">{message}</p>
+              <p className="text-slate-600 mb-6 whitespace-pre-line">{message}</p>
               <button
                 onClick={() => window.location.href = '/'}
                 className="w-full bg-gradient-to-r from-slate-700 to-slate-900 text-white py-3 px-4 rounded-xl font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-200"
