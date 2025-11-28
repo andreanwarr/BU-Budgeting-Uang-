@@ -154,6 +154,10 @@ export function ProfileManager() {
 
       setSuccess('Foto profil berhasil diperbarui');
       loadProfile();
+
+      // Trigger event to reload avatar in sidebar
+      window.dispatchEvent(new CustomEvent('profile-updated'));
+
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message || 'Gagal mengunggah foto');

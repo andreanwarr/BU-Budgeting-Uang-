@@ -204,13 +204,28 @@ export function Charts() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={(entry) => `${entry.name}: ${entry.percent?.toFixed(1)}%`}
+                  label={(entry) => `${entry.name}: ${entry.percentage.toFixed(1)}%`}
                 >
                   {categoryData.incomeData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                          <p className="font-semibold text-slate-800">{data.name}</p>
+                          <p className="text-emerald-600">{formatCurrency(data.value)}</p>
+                          <p className="text-sm text-slate-600">{data.percentage.toFixed(1)}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -233,13 +248,28 @@ export function Charts() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={(entry) => `${entry.name}: ${entry.percent?.toFixed(1)}%`}
+                  label={(entry) => `${entry.name}: ${entry.percentage.toFixed(1)}%`}
                 >
                   {categoryData.expenseData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                          <p className="font-semibold text-slate-800">{data.name}</p>
+                          <p className="text-rose-600">{formatCurrency(data.value)}</p>
+                          <p className="text-sm text-slate-600">{data.percentage.toFixed(1)}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -255,7 +285,7 @@ export function Charts() {
           <div className="text-center py-12 text-slate-500">Belum ada data transaksi</div>
         ) : (
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={dailyTrend}>
+            <BarChart data={dailyTrend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
@@ -267,9 +297,9 @@ export function Charts() {
                 labelFormatter={(label) => new Date(label).toLocaleDateString('id-ID')}
               />
               <Legend />
-              <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} name="Pemasukan" />
-              <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} name="Pengeluaran" />
-            </LineChart>
+              <Bar dataKey="income" fill="#10b981" name="Pemasukan" />
+              <Bar dataKey="expense" fill="#ef4444" name="Pengeluaran" />
+            </BarChart>
           </ResponsiveContainer>
         )}
       </div>

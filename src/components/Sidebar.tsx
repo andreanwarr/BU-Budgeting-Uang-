@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet, Sun, Moon, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { supabase } from '../lib/supabase';
 
 interface SidebarProps {
   currentView: string;
@@ -12,6 +13,38 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const { signOut, user } = useAuth();
   const { theme, setTheme, t } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data?.avatar_url) {
+      setAvatarUrl(data.avatar_url);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadUserProfile();
+    }
+
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      loadUserProfile();
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
+  }, [user]);
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -65,15 +98,33 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
 
         {/* User Info */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
-              {user?.email?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
+          <button
+            onClick={() => {
+              handleItemClick('settings');
+              setTimeout(() => {
+                const profileTab = document.querySelector('[data-tab="profile"]') as HTMLElement;
+                if (profileTab) profileTab.click();
+              }, 100);
+            }}
+            className="w-full flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 rounded-lg transition-colors duration-200"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{user?.email}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{t('activeUser')}</p>
             </div>
-          </div>
+            <User className="w-4 h-4 text-slate-400" />
+          </button>
         </div>
 
         {/* Navigation Menu */}

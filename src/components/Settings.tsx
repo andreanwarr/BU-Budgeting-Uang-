@@ -54,6 +54,7 @@ export function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('profile')}
+          data-tab="profile"
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
             activeTab === 'profile'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
