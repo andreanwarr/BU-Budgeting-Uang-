@@ -2,10 +2,15 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DatePreferencesProvider } from './contexts/DatePreferencesContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthForm } from './components/AuthForm';
+import { AuthCallback } from './components/AuthCallback';
 import { MainLayout } from './components/MainLayout';
 
 function AppContent() {
   const { user, loading } = useAuth();
+
+  // Check if this is an auth callback (email verification)
+  const isAuthCallback = window.location.pathname === '/auth/callback' ||
+                        window.location.hash.includes('access_token');
 
   if (loading) {
     return (
@@ -16,6 +21,11 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  // Show callback page for email verification
+  if (isAuthCallback) {
+    return <AuthCallback />;
   }
 
   return user ? <MainLayout /> : <AuthForm />;

@@ -13,7 +13,8 @@ export function AuthForm() {
   const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
   const [loading, setLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const { signIn, signUp, resendVerificationEmail } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -56,22 +57,34 @@ export function AuthForm() {
     setLoading(true);
 
     try {
-      const { error } = isSignUp
-        ? await signUp(email, password)
-        : await signIn(email, password);
+      if (isSignUp) {
+        const { error, needsEmailVerification } = await signUp(email, password);
 
-      if (error) {
-        if (error.message.includes('Email not confirmed')) {
-          setError('Email belum diverifikasi. Silakan cek inbox Anda dan klik link verifikasi.');
-        } else if (error.message.includes('Invalid login credentials')) {
-          setError('Email atau password salah.');
-        } else {
-          setError(error.message);
+        if (error) {
+          if (error.message.includes('User already registered')) {
+            setError('Email sudah terdaftar. Silakan login atau gunakan email lain.');
+          } else {
+            setError(error.message);
+          }
+        } else if (needsEmailVerification) {
+          setVerificationSent(true);
+          setVerificationEmail(email);
+          setEmail('');
+          setPassword('');
         }
-      } else if (isSignUp) {
-        setVerificationSent(true);
-        setEmail('');
-        setPassword('');
+      } else {
+        const { error } = await signIn(email, password);
+
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+            setError('Email belum diverifikasi. Silakan cek inbox Anda dan klik link verifikasi.');
+            setVerificationEmail(email);
+          } else if (error.message.includes('Invalid login credentials')) {
+            setError('Email atau password salah.');
+          } else {
+            setError(error.message);
+          }
+        }
       }
     } catch (err) {
       setError('Terjadi kesalahan. Silakan coba lagi.');
@@ -173,12 +186,30 @@ export function AuthForm() {
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
                 <div className="flex items-start gap-3">
                   <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold mb-1">Email verifikasi telah dikirim!</p>
-                    <p className="text-xs">
-                      Silakan cek inbox email Anda ({email}) dan klik link verifikasi untuk mengaktifkan akun.
+                    <p className="text-xs mb-2">
+                      Silakan cek inbox email Anda ({verificationEmail}) dan klik link verifikasi untuk mengaktifkan akun.
                       Jika tidak menerima email, periksa folder spam.
                     </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setLoading(true);
+                        const { error } = await resendVerificationEmail(verificationEmail);
+                        if (error) {
+                          setError('Gagal mengirim ulang email. Silakan coba lagi.');
+                        } else {
+                          setError('');
+                          alert('Email verifikasi telah dikirim ulang!');
+                        }
+                        setLoading(false);
+                      }}
+                      disabled={loading}
+                      className="text-xs font-semibold underline hover:text-emerald-800 disabled:opacity-50"
+                    >
+                      Kirim ulang email verifikasi
+                    </button>
                   </div>
                 </div>
               </div>
@@ -186,7 +217,27 @@ export function AuthForm() {
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+                <p>{error}</p>
+                {verificationEmail && error.includes('Email belum diverifikasi') && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setLoading(true);
+                      const { error: resendError } = await resendVerificationEmail(verificationEmail);
+                      if (resendError) {
+                        setError('Gagal mengirim ulang email. Silakan coba lagi.');
+                      } else {
+                        setError('');
+                        setVerificationSent(true);
+                      }
+                      setLoading(false);
+                    }}
+                    disabled={loading}
+                    className="mt-2 text-xs font-semibold underline hover:text-red-800 disabled:opacity-50"
+                  >
+                    Kirim ulang email verifikasi
+                  </button>
+                )}
               </div>
             )}
 
