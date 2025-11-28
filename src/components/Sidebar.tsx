@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet } from 'lucide-react';
+import { LayoutDashboard, Receipt, FolderOpen, HandCoins, BarChart3, Settings, LogOut, Menu, X, Wallet, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface SidebarProps {
   currentView: string;
@@ -9,15 +10,16 @@ interface SidebarProps {
 
 export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const { signOut, user } = useAuth();
+  const { theme, setTheme, t } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'transactions', label: 'Transaksi', icon: Receipt },
-    { id: 'categories', label: 'Kategori', icon: FolderOpen },
-    { id: 'kasbon', label: 'Kasbon', icon: HandCoins },
-    { id: 'reports', label: 'Laporan', icon: BarChart3 },
-    { id: 'settings', label: 'Pengaturan', icon: Settings },
+    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'transactions', label: t('transactions'), icon: Receipt },
+    { id: 'categories', label: t('categories'), icon: FolderOpen },
+    { id: 'kasbon', label: t('kasbon'), icon: HandCoins },
+    { id: 'reports', label: t('reports'), icon: BarChart3 },
+    { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
   const handleItemClick = (id: string) => {
@@ -45,32 +47,32 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-slate-200 transition-transform duration-300 z-40 ${
+        className={`fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } w-64 flex flex-col`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-slate-200">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 rounded-xl">
               <Wallet className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">BU</h1>
-              <p className="text-xs text-slate-600">Budgeting Uang</p>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">{t('appName')}</h1>
+              <p className="text-xs text-slate-600 dark:text-slate-400">{t('appFullName')}</p>
             </div>
           </div>
         </div>
 
         {/* User Info */}
-        <div className="px-6 py-4 border-b border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
               {user?.email?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 truncate">{user?.email}</p>
-              <p className="text-xs text-slate-500">Pengguna Aktif</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{user?.email}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t('activeUser')}</p>
             </div>
           </div>
         </div>
@@ -89,7 +91,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -101,14 +103,21 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
           </ul>
         </nav>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-slate-200">
+        {/* Theme Toggle & Logout */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
+          >
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            <span className="font-medium">{theme === 'light' ? (t('language') === 'English' ? 'Dark Mode' : 'Mode Gelap') : (t('language') === 'English' ? 'Light Mode' : 'Mode Terang')}</span>
+          </button>
           <button
             onClick={signOut}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span className="font-medium">Keluar</span>
+            <span className="font-medium">{t('logout')}</span>
           </button>
         </div>
       </aside>

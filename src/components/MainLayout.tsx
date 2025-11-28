@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Dashboard } from './Dashboard';
-import { CategoryManager } from './CategoryManager';
+import { CategoryManagerView } from './CategoryManagerView';
 import { KasbonManager } from './KasbonManager';
 import { Charts } from './Charts';
+import { Settings } from './Settings';
 
 export function MainLayout() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -15,30 +16,20 @@ export function MainLayout() {
       case 'transactions':
         return <Dashboard />;
       case 'categories':
-        return <CategoryManager />;
+        return <CategoryManagerView />;
       case 'kasbon':
         return <KasbonManager />;
       case 'reports':
         return <Charts />;
       case 'settings':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">Pengaturan</h2>
-              <p className="text-sm text-slate-600 mt-1">Kelola preferensi aplikasi Anda</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl border border-slate-200">
-              <p className="text-slate-600">Fitur pengaturan akan segera hadir.</p>
-            </div>
-          </div>
-        );
+        return <Settings />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">

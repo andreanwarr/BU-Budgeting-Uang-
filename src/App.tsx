@@ -1,5 +1,6 @@
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DatePreferencesProvider } from './contexts/DatePreferencesContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthForm } from './components/AuthForm';
 import { MainLayout } from './components/MainLayout';
 
@@ -23,9 +24,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <DatePreferencesProvider>
-        <AppContent />
-      </DatePreferencesProvider>
+      <SettingsProvider>
+        <DatePreferencesProvider>
+          <AppContent />
+        </DatePreferencesProvider>
+      </SettingsProvider>
     </AuthProvider>
   );
 }

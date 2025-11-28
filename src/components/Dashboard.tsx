@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, Transaction, Category } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 import {
   Plus,
   TrendingUp,
@@ -14,9 +15,11 @@ import { FilterBar } from './FilterBar';
 import { DateRangePicker } from './DateRangePicker';
 import { CompactExportDropdown } from './CompactExportDropdown';
 import { CategoryManager } from './CategoryManager';
+import { QuickTransactionButton } from './QuickTransactionButton';
 
 export function Dashboard() {
   const { user } = useAuth();
+  const { t } = useSettings();
 
   // === DATA STATE ===
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]); // semua transaksi mentah
@@ -317,10 +320,10 @@ export function Dashboard() {
           />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-800">
-              Transaksi
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-white">
+              {t('transactions')}
             </h2>
             <button
               onClick={() => {
@@ -330,7 +333,7 @@ export function Dashboard() {
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-sm hover:shadow-md active:scale-98"
             >
               <Plus className="w-5 h-5" />
-              <span>Tambah Transaksi</span>
+              <span>{t('addTransaction')}</span>
             </button>
           </div>
 
@@ -368,6 +371,13 @@ export function Dashboard() {
           onClose={() => setShowCategoryManager(false)}
         />
       )}
+
+      <QuickTransactionButton
+        onClick={() => {
+          setEditingTransaction(null);
+          setShowForm(true);
+        }}
+      />
     </div>
   );
 }

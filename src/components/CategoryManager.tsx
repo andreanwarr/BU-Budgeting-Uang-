@@ -156,21 +156,24 @@ export function CategoryManager({ categories, onCategoriesUpdate, onClose }: Cat
     return IconComponent || Icons.Circle;
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+  const isModal = onClose && typeof onClose === 'function';
+
+  const content = (
+    <>
+      {isModal && (
+        <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <FolderPlus className="w-6 h-6 text-emerald-600" />
-            <h2 className="text-xl font-bold text-slate-800">Kelola Kategori</h2>
+            <FolderPlus className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Kelola Kategori</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-200"
           >
-            <X className="w-5 h-5 text-slate-600" />
+            <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
           </button>
         </div>
+      )}
 
         <div className="flex-1 overflow-y-auto p-6">
           {error && (
@@ -378,7 +381,22 @@ export function CategoryManager({ categories, onCategoriesUpdate, onClose }: Cat
             </div>
           </div>
         </div>
+    </>
+  );
+
+  if (isModal) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          {content}
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+      {content}
     </div>
   );
 }

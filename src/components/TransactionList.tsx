@@ -1,6 +1,7 @@
 import { Transaction, Category } from '../lib/supabase';
 import { Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -17,14 +18,7 @@ export function TransactionList({
   onEdit,
   onDelete
 }: TransactionListProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
+  const { formatCurrency } = useSettings();
 
   const formatDate = (date: string) => {
     const d = new Date(date);
@@ -58,7 +52,7 @@ export function TransactionList({
     return (
       <div className="text-center py-12">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
-        <p className="mt-4 text-slate-600">Memuat transaksi...</p>
+        <p className="mt-4 text-slate-600 dark:text-slate-400">Memuat transaksi...</p>
       </div>
     );
   }
@@ -66,11 +60,11 @@ export function TransactionList({
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <TrendingUp className="w-8 h-8 text-slate-400" />
+        <div className="bg-slate-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <TrendingUp className="w-8 h-8 text-slate-400 dark:text-slate-500" />
         </div>
-        <p className="text-slate-600 font-medium">Belum ada transaksi</p>
-        <p className="text-slate-500 text-sm mt-1">Mulai tambahkan transaksi pertama Anda</p>
+        <p className="text-slate-600 dark:text-slate-300 font-medium">Belum ada transaksi</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Mulai tambahkan transaksi pertama Anda</p>
       </div>
     );
   }
@@ -103,7 +97,7 @@ export function TransactionList({
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
               <div className="w-1 h-8 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full"></div>
-              <h3 className="text-sm font-bold text-slate-700">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {formatDate(date)}
               </h3>
             </div>
@@ -128,7 +122,7 @@ export function TransactionList({
               return (
                 <div
                   key={transaction.id}
-                  className="bg-white hover:bg-gradient-to-r hover:from-slate-50 hover:to-white rounded-xl p-3 sm:p-4 transition-all duration-200 border-2 border-slate-100 hover:border-emerald-200 hover:shadow-md group"
+                  className="bg-white dark:bg-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-600 dark:hover:to-slate-700 rounded-xl p-3 sm:p-4 transition-all duration-200 border-2 border-slate-100 dark:border-slate-600 hover:border-emerald-200 dark:hover:border-emerald-600 hover:shadow-md group"
                 >
                   <div className="flex items-start sm:items-center justify-between gap-2">
                     <div className="flex items-start sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
@@ -142,7 +136,7 @@ export function TransactionList({
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-slate-800 truncate text-sm sm:text-base group-hover:text-emerald-700 transition-colors">
+                          <h4 className="font-bold text-slate-800 dark:text-white truncate text-sm sm:text-base group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                             {transaction.title}
                           </h4>
                           {transaction.type === 'income' ? (
@@ -152,13 +146,13 @@ export function TransactionList({
                           )}
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-medium truncate inline-block">
+                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md font-medium truncate inline-block">
                             {category?.name || 'Tanpa Kategori'}
                           </span>
                           {transaction.description && (
                             <>
                               <span className="hidden sm:inline text-slate-400">•</span>
-                              <span className="text-slate-600 truncate">{transaction.description}</span>
+                              <span className="text-slate-600 dark:text-slate-300 truncate">{transaction.description}</span>
                             </>
                           )}
                         </div>
@@ -188,14 +182,14 @@ export function TransactionList({
                       <div className="flex gap-1">
                         <button
                           onClick={() => onEdit(transaction)}
-                          className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-90 hover:scale-110"
+                          className="p-2 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-all duration-200 active:scale-90 hover:scale-110"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDelete(transaction.id)}
-                          className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-90 hover:scale-110"
+                          className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg transition-all duration-200 active:scale-90 hover:scale-110"
                           title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
