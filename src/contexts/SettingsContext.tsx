@@ -185,12 +185,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         .update(updates)
         .eq('id', settingsId);
     } else {
-      await createDefaultSettings();
-      if (settingsId) {
-        await supabase
-          .from('user_settings')
-          .update(updates)
-          .eq('id', settingsId);
+      // Create settings with the updates included
+      const { data, error } = await supabase
+        .from('user_settings')
+        .insert([
+          {
+            user_id: user.id,
+            language: updates.language || language,
+            currency: updates.currency || currency,
+            theme: updates.theme || theme,
+          },
+        ])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setSettingsId(data.id);
       }
     }
   };

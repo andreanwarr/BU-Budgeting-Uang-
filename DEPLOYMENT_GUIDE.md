@@ -1,15 +1,16 @@
 # Finance Tracker - Deployment Guide
 
-**Version:** 2.4.0  
+**Version:** 3.0.0
 **Last Updated:** November 2025
 
-Complete guide untuk deploy Finance Tracker ke berbagai platform hosting.
+Complete guide untuk deploy Finance Tracker ke berbagai platform hosting dengan database setup.
 
 ---
 
 ## 📋 Table of Contents
 
 - [Prerequisites](#prerequisites)
+- [Database Setup](#-critical-database-setup)
 - [Build Process](#build-process)
 - [Platform-Specific Guides](#platform-specific-guides)
   - [Netlify](#deploy-ke-netlify)
@@ -17,6 +18,7 @@ Complete guide untuk deploy Finance Tracker ke berbagai platform hosting.
   - [Railway](#deploy-ke-railway)
   - [Render](#deploy-ke-render)
   - [GitHub Pages](#deploy-ke-github-pages)
+- [Post-Deployment Checklist](#post-deployment-checklist)
 - [Custom Domain](#custom-domain-setup)
 - [Environment Variables](#environment-variables)
 - [Troubleshooting](#troubleshooting)
@@ -35,6 +37,78 @@ Complete guide untuk deploy Finance Tracker ke berbagai platform hosting.
 ### Recommended
 - Domain name (optional, for custom domain)
 - CloudFlare account (optional, for CDN & SSL)
+
+---
+
+## 🚨 CRITICAL: Database Setup
+
+### BEFORE DEPLOYING, YOU MUST CREATE DATABASE TABLES!
+
+The application requires specific database tables to function. Follow these steps:
+
+### Step 1: Create Supabase Project
+
+1. Go to [Supabase Dashboard](https://app.supabase.com)
+2. Create new project or use existing
+3. Wait for project to initialize
+
+### Step 2: Run Database Migrations
+
+**Option A: Via Supabase Dashboard (Easiest)**
+
+1. Open your project in Supabase Dashboard
+2. Go to **SQL Editor**
+3. Copy content from `supabase/migrations/create_core_tables.sql`
+4. Paste and run in SQL Editor
+5. Verify tables created:
+   ```sql
+   SELECT tablename FROM pg_tables WHERE schemaname = 'public';
+   ```
+
+Expected tables:
+- `categories` (14 default categories created)
+- `transactions`
+- `kasbon`
+- `user_settings`
+
+**Option B: Via Supabase CLI**
+
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Login
+supabase login
+
+# Link to your project
+supabase link --project-ref your-project-ref
+
+# Apply migrations
+supabase db push
+```
+
+### Step 3: Verify Database
+
+Check that tables exist and RLS is enabled:
+
+```sql
+-- Check tables
+SELECT
+  tablename,
+  (SELECT COUNT(*) FROM pg_policies WHERE tablename = pg_tables.tablename) as policy_count
+FROM pg_tables
+WHERE schemaname = 'public';
+
+-- Should show 4 tables with policies
+```
+
+### Step 4: Get API Credentials
+
+1. In Supabase Dashboard → Settings → API
+2. Copy:
+   - **Project URL** (e.g., `https://xxx.supabase.co`)
+   - **anon/public key** (starts with `eyJ...`)
+3. Keep these for environment variables
 
 ---
 
@@ -83,8 +157,8 @@ ls -la dist/
 # Should contain:
 # - index.html
 # - assets/
-# - manifest.json
-# - sw.js
+# - manifest.json (PWA)
+# - sw.js (Service Worker)
 ```
 
 ---
@@ -98,129 +172,49 @@ ls -la dist/
 ### Method 1: Netlify CLI (Recommended)
 
 ```bash
-# 1. Install Netlify CLI globally
+# Install Netlify CLI
 npm install -g netlify-cli
 
-# 2. Login to Netlify
+# Login
 netlify login
-# Browser will open for authentication
 
-# 3. Initialize (first time only)
+# Initialize (first time only)
 netlify init
-# Select: "Create & configure a new site"
-# Choose team
-# Site name: finance-tracker (or custom)
-# Build command: npm run build
-# Publish directory: dist
 
-# 4. Deploy to production
-netlify deploy --prod
+# Deploy to production
+netlify deploy --prod --dir=dist
 ```
 
-### Method 2: Drag & Drop
+### Method 2: Netlify Dashboard
 
-```bash
-# 1. Build locally
-npm run build
+1. Go to [Netlify](https://app.netlify.com)
+2. Click "Add new site" → "Deploy manually"
+3. Drag & drop `dist/` folder
+4. Add environment variables (see below)
 
-# 2. Go to Netlify Dashboard
-# https://app.netlify.com/drop
+### Netlify Configuration
 
-# 3. Drag & drop the dist/ folder
-
-# 4. Add environment variables
-# Site settings → Environment → Environment variables
-# Add: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-```
-
-### Method 3: Git Integration (Best for CI/CD)
-
-#### 3.1. Push to GitHub
-
-```bash
-# Ensure .env is in .gitignore
-echo ".env" >> .gitignore
-
-# Commit and push
-git add .
-git commit -m "Initial commit"
-git push origin main
-```
-
-#### 3.2. Connect to Netlify
-
-1. Go to [Netlify Dashboard](https://app.netlify.com)
-2. Click **"Add new site"** → **"Import an existing project"**
-3. Choose **GitHub** and authorize
-4. Select your repository
-5. Configure build settings:
-   ```
-   Branch to deploy: main
-   Build command: npm run build
-   Publish directory: dist
-   ```
-6. Click **"Show advanced"** → **"New variable"**
-   - Add `VITE_SUPABASE_URL`
-   - Add `VITE_SUPABASE_ANON_KEY`
-7. Click **"Deploy site"**
-
-### Netlify Configuration File
-
-Create `netlify.toml` in root:
+Create `netlify.toml`:
 
 ```toml
 [build]
   command = "npm run build"
   publish = "dist"
 
-[build.environment]
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
-
-# SPA redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Security headers
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
-# Cache static assets
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+[build.environment]
+  NODE_VERSION = "18"
 ```
 
-### Netlify CLI Commands
+### Environment Variables
 
-```bash
-# Check status
-netlify status
-
-# Open site in browser
-netlify open:site
-
-# Open admin dashboard
-netlify open:admin
-
-# View logs
-netlify watch
-
-# Link existing site
-netlify link
-
-# Environment variables
-netlify env:list
-netlify env:set KEY value
-```
+In Netlify Dashboard → Site settings → Environment variables:
+- `VITE_SUPABASE_URL` = `https://xxx.supabase.co`
+- `VITE_SUPABASE_ANON_KEY` = `eyJ...`
 
 ---
 
@@ -229,60 +223,31 @@ netlify env:set KEY value
 ### Method 1: Vercel CLI
 
 ```bash
-# 1. Install Vercel CLI
+# Install Vercel CLI
 npm install -g vercel
 
-# 2. Login
+# Login
 vercel login
-# Enter email and verify
 
-# 3. Deploy to production
+# Deploy to production
 vercel --prod
-
-# Follow prompts:
-# - Setup and deploy? Y
-# - Which scope? Select your account
-# - Link to existing project? N
-# - Project name: finance-tracker
-# - Directory: ./
-# - Override settings? N
 ```
 
-### Method 2: Vercel Dashboard (Git Integration)
+### Method 2: Vercel Dashboard
 
-#### 2.1. Push to GitHub (if not done)
+1. Go to [Vercel](https://vercel.com)
+2. Click "Add New" → "Project"
+3. Import from Git repository
+4. Configure:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+5. Add environment variables
+6. Deploy
 
-```bash
-git add .
-git commit -m "Prepare for deployment"
-git push origin main
-```
+### Vercel Configuration
 
-#### 2.2. Import to Vercel
-
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Click **"Add New..."** → **"Project"**
-3. **Import Git Repository:**
-   - Click **"Import"** on your repo
-   - Or use **"Import Third-Party Git Repository"** for other platforms
-4. **Configure Project:**
-   ```
-   Framework Preset: Vite
-   Root Directory: ./
-   Build Command: npm run build (auto-detected)
-   Output Directory: dist (auto-detected)
-   Install Command: npm install (auto-detected)
-   ```
-5. **Environment Variables:**
-   - Click **"Environment Variables"**
-   - Add `VITE_SUPABASE_URL`
-   - Add `VITE_SUPABASE_ANON_KEY`
-   - Apply to: Production, Preview, Development
-6. Click **"Deploy"**
-
-### Vercel Configuration File
-
-Create `vercel.json` in root:
+Create `vercel.json`:
 
 ```json
 {
@@ -291,161 +256,53 @@ Create `vercel.json` in root:
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "regions": ["sin1"],
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
 ```
 
-### Vercel CLI Commands
+### Environment Variables
 
-```bash
-# Deploy preview
-vercel
-
-# Deploy production
-vercel --prod
-
-# View logs
-vercel logs
-
-# Environment variables
-vercel env ls
-vercel env add VARIABLE_NAME
-vercel env rm VARIABLE_NAME
-
-# Domains
-vercel domains ls
-vercel domains add example.com
-
-# Remove deployment
-vercel remove finance-tracker
-```
+In Vercel Dashboard → Settings → Environment Variables:
+- `VITE_SUPABASE_URL` = `https://xxx.supabase.co`
+- `VITE_SUPABASE_ANON_KEY` = `eyJ...`
 
 ---
 
 ## Deploy ke Railway
 
-### Railway Dashboard Method
+### Via Railway Dashboard
 
-1. **Sign Up/Login:**
-   - Go to [Railway](https://railway.app)
-   - Sign in with GitHub
+1. Go to [Railway](https://railway.app)
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select your repository
+4. Railway auto-detects Vite
+5. Add environment variables
+6. Deploy
 
-2. **Create New Project:**
-   - Click **"New Project"**
-   - Select **"Deploy from GitHub repo"**
-   - Choose your repository
+### Environment Variables
 
-3. **Auto-Configuration:**
-   - Railway auto-detects Vite
-   - Build command: `npm run build`
-   - Start command: Auto-detected
-
-4. **Environment Variables:**
-   - Click on your project
-   - Go to **"Variables"** tab
-   - Add:
-     ```
-     VITE_SUPABASE_URL=https://xxxxx.supabase.co
-     VITE_SUPABASE_ANON_KEY=your-key
-     ```
-
-5. **Deploy:**
-   - Click **"Deploy"**
-   - Railway builds and deploys automatically
-
-### Railway CLI Method
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login
-railway login
-
-# Initialize
-railway init
-
-# Link project
-railway link
-
-# Add environment variables
-railway variables set VITE_SUPABASE_URL=https://xxxxx.supabase.co
-railway variables set VITE_SUPABASE_ANON_KEY=your-key
-
-# Deploy
-railway up
-```
-
-### Railway Configuration
-
-Create `railway.json`:
-
-```json
-{
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "npm run build"
-  },
-  "deploy": {
-    "startCommand": "npm run preview",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
-```
+Add in Railway Dashboard:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
 ---
 
 ## Deploy ke Render
 
-### Render Dashboard Method
+### Via Render Dashboard
 
-1. **Sign Up/Login:**
-   - Go to [Render](https://render.com)
-   - Sign in with GitHub
+1. Go to [Render](https://render.com)
+2. Click "New" → "Static Site"
+3. Connect GitHub repository
+4. Configure:
+   - **Build Command:** `npm run build`
+   - **Publish Directory:** `dist`
+5. Add environment variables
+6. Deploy
 
-2. **New Static Site:**
-   - Click **"New"** → **"Static Site"**
-   - Connect repository
-
-3. **Configure:**
-   ```
-   Name: finance-tracker
-   Branch: main
-   Build Command: npm run build
-   Publish Directory: dist
-   ```
-
-4. **Environment Variables:**
-   - Scroll to **"Environment"**
-   - Add:
-     ```
-     VITE_SUPABASE_URL
-     VITE_SUPABASE_ANON_KEY
-     ```
-
-5. **Create Static Site:**
-   - Click **"Create Static Site"**
-   - Wait for build
-
-### Render Blueprint (render.yaml)
+### Render Configuration
 
 Create `render.yaml`:
 
@@ -454,17 +311,11 @@ services:
   - type: web
     name: finance-tracker
     env: static
-    buildCommand: npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
     envVars:
-      - key: NODE_VERSION
-        value: 18
       - key: VITE_SUPABASE_URL
-        value: https://xxxxx.supabase.co
+        sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
 ```
@@ -475,179 +326,115 @@ services:
 
 ### Setup
 
-1. **Install gh-pages:**
-   ```bash
-   npm install -D gh-pages
-   ```
+```bash
+# Install gh-pages
+npm install -D gh-pages
 
-2. **Update package.json:**
-   ```json
-   {
-     "scripts": {
-       "predeploy": "npm run build",
-       "deploy": "gh-pages -d dist"
-     },
-     "homepage": "https://yourusername.github.io/finance-tracker"
-   }
-   ```
+# Add deploy script to package.json
+```
 
-3. **Update vite.config.ts:**
-   ```typescript
-   import { defineConfig } from 'vite';
-   
-   export default defineConfig({
-     base: '/finance-tracker/', // Repository name
-     // ... other config
-   });
-   ```
+Update `package.json`:
+```json
+{
+  "scripts": {
+    "deploy": "npm run build && gh-pages -d dist"
+  }
+}
+```
+
+Update `vite.config.ts`:
+```typescript
+export default defineConfig({
+  base: '/finance-tracker/', // Replace with your repo name
+  // ... rest of config
+})
+```
 
 ### Deploy
 
 ```bash
-# Deploy to gh-pages branch
 npm run deploy
-
-# Or manually
-npm run build
-git add dist -f
-git commit -m "Deploy to GitHub Pages"
-git subtree push --prefix dist origin gh-pages
 ```
 
-### GitHub Pages Settings
+### Enable GitHub Pages
 
-1. Go to repository settings
-2. **Pages** section
-3. Source: `gh-pages` branch
-4. Root directory: `/` (root)
-5. Save
+1. Go to repository → Settings → Pages
+2. Source: `gh-pages` branch
+3. Wait for deployment
+4. Access at: `https://username.github.io/finance-tracker`
 
-### Custom Domain on GitHub Pages
+---
 
-1. Add CNAME file in `public/`:
-   ```
-   yourdomain.com
-   ```
+## Post-Deployment Checklist
 
-2. Configure DNS:
-   ```
-   Type: A
-   Name: @
-   Value: 185.199.108.153
-         185.199.109.153
-         185.199.110.153
-         185.199.111.153
-   
-   Type: CNAME
-   Name: www
-   Value: yourusername.github.io
-   ```
+After deploying to any platform, verify:
+
+### 1. Environment Variables
+```bash
+# Test in browser console
+console.log(import.meta.env.VITE_SUPABASE_URL);
+// Should show your Supabase URL
+```
+
+### 2. Database Connection
+- [ ] Can sign up new user
+- [ ] Can log in
+- [ ] Can create transaction
+- [ ] Can view transactions
+
+### 3. Features Working
+- [ ] Dark/Light mode toggle
+- [ ] Language switch (EN/ID)
+- [ ] Currency switch (USD/IDR)
+- [ ] Settings save properly
+- [ ] Export functions (Excel/PNG)
+
+### 4. Theme Persistence
+- [ ] Toggle dark mode
+- [ ] Refresh page
+- [ ] Theme should remain dark
+- [ ] Check database: `SELECT * FROM user_settings;`
+
+### 5. Performance
+- [ ] Page loads < 3 seconds
+- [ ] No console errors
+- [ ] All assets loaded
+- [ ] Service worker registered (PWA)
 
 ---
 
 ## Custom Domain Setup
 
-### Netlify Custom Domain
+### Netlify
 
-1. **Add Domain:**
-   - Site settings → Domain management
-   - Add custom domain
-   - Enter: `yourdomain.com`
-
-2. **Configure DNS:**
-   
-   **Option A: Netlify DNS (Recommended)**
+1. Netlify Dashboard → Domain settings
+2. Add custom domain
+3. Update DNS records at your registrar:
    ```
-   Update nameservers at domain registrar to:
-   dns1.p0X.nsone.net
-   dns2.p0X.nsone.net
-   dns3.p0X.nsone.net
-   dns4.p0X.nsone.net
+   CNAME: your-domain.com → your-site.netlify.app
    ```
+4. Enable HTTPS (automatic with Netlify)
 
-   **Option B: External DNS**
+### Vercel
+
+1. Vercel Dashboard → Settings → Domains
+2. Add domain
+3. Update DNS:
    ```
-   Type: A
-   Name: @
-   Value: 75.2.60.5
-   
-   Type: CNAME
-   Name: www
-   Value: your-site.netlify.app
+   CNAME: your-domain.com → cname.vercel-dns.com
    ```
+4. HTTPS enabled automatically
 
-3. **Enable HTTPS:**
-   - Automatic (Let's Encrypt)
-   - Force HTTPS redirect
+### CloudFlare (Recommended for all platforms)
 
-### Vercel Custom Domain
-
-1. **Add Domain:**
-   - Project settings → Domains
-   - Enter domain: `yourdomain.com`
-   - Add www variant
-
-2. **Configure DNS:**
-   ```
-   Type: A
-   Name: @
-   Value: 76.76.21.21
-   
-   Type: CNAME
-   Name: www
-   Value: cname.vercel-dns.com
-   ```
-
-3. **Verify:**
-   - Vercel checks DNS automatically
-   - SSL certificate auto-provisioned
-
-### CloudFlare Setup (Recommended)
-
-Benefits:
-- Free SSL/TLS
-- DDoS protection
-- CDN (faster loading)
-- Analytics
-
-**Steps:**
-
-1. **Add Site to CloudFlare:**
-   - Go to [CloudFlare Dashboard](https://dash.cloudflare.com)
-   - Add site: `yourdomain.com`
-   - Select Free plan
-   - Scan existing DNS records
-
-2. **Update Nameservers:**
-   ```
-   At your domain registrar, change nameservers to:
-   name1.cloudflare.com
-   name2.cloudflare.com
-   ```
-
-3. **Configure DNS:**
-   ```
-   Type: A
-   Name: @
-   Value: [Your hosting IP]
-   Proxy status: Proxied (orange cloud)
-   
-   Type: CNAME
-   Name: www
-   Value: yourdomain.com
-   Proxy status: Proxied
-   ```
-
-4. **SSL/TLS Settings:**
-   - Go to SSL/TLS
-   - Mode: Full (strict)
-   - Always Use HTTPS: On
-   - Automatic HTTPS Rewrites: On
-
-5. **Caching:**
-   - Caching → Configuration
-   - Caching Level: Standard
-   - Browser Cache TTL: 4 hours
+1. Add site to CloudFlare
+2. Update nameservers at registrar
+3. Enable:
+   - SSL/TLS: Full
+   - Auto Minify: JS, CSS, HTML
+   - Brotli compression
+   - HTTP/3
+4. Create CNAME record to your deployment
 
 ---
 
@@ -656,237 +443,201 @@ Benefits:
 ### Required Variables
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbG...
-
-# Optional
-VITE_APP_NAME=Finance Tracker
-VITE_APP_VERSION=2.4.0
-```
-
-### Platform-Specific Setup
-
-**Netlify:**
-```bash
-netlify env:set VITE_SUPABASE_URL "https://xxxxx.supabase.co"
-netlify env:set VITE_SUPABASE_ANON_KEY "your-key"
-```
-
-**Vercel:**
-```bash
-vercel env add VITE_SUPABASE_URL production
-# Enter value when prompted
-
-vercel env add VITE_SUPABASE_ANON_KEY production
-```
-
-**Railway:**
-```bash
-railway variables set VITE_SUPABASE_URL="https://xxxxx.supabase.co"
-railway variables set VITE_SUPABASE_ANON_KEY="your-key"
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGc...
 ```
 
 ### Security Best Practices
 
-1. **Never commit `.env` to Git:**
-   ```bash
-   # .gitignore
-   .env
-   .env.local
-   .env.production
-   ```
+1. **Never commit `.env` to Git**
+   - Already in `.gitignore`
+   - Use platform-specific env vars
 
-2. **Use different keys for environments:**
-   - Development: Test Supabase project
-   - Production: Production Supabase project
+2. **Use `VITE_` prefix**
+   - Required for Vite to expose to client
+   - Only `VITE_*` vars are accessible
 
-3. **Rotate keys periodically:**
-   - Generate new anon key every 3-6 months
-   - Update in all deployment platforms
+3. **Rotate keys periodically**
+   - Generate new anon key in Supabase
+   - Update in all deployments
+
+4. **Use different keys per environment**
+   - Production: Different Supabase project
+   - Staging: Separate Supabase project
+   - Development: Local `.env`
 
 ---
 
 ## Troubleshooting
 
-### Build Failures
+### Build Errors
 
-**Error: "Module not found"**
+**Error: Module not found**
 ```bash
-# Solution 1: Clear and reinstall
+# Clear and reinstall
 rm -rf node_modules package-lock.json
 npm install
-
-# Solution 2: Check imports
-# Ensure all imports use correct paths
 ```
 
-**Error: "Out of memory"**
+**Error: TypeScript errors**
 ```bash
-# Increase Node memory
-NODE_OPTIONS="--max-old-space-size=4096" npm run build
-```
-
-**Error: "TypeScript errors"**
-```bash
-# Type check
+# Check types
 npm run typecheck
 
-# Ignore errors (not recommended)
-# tsconfig.json: "skipLibCheck": true
-```
-
-### Deployment Failures
-
-**Error: "Environment variables not found"**
-- Verify variable names have `VITE_` prefix
-- Check variable values (no quotes in dashboard)
-- Redeploy after adding variables
-
-**Error: "404 on page refresh"**
-- Add redirect rules (see platform configs)
-- SPA mode must be enabled
-- Check `_redirects` or `vercel.json`
-
-**Error: "Build succeeded but site is blank"**
-- Check browser console for errors
-- Verify Supabase URL is correct
-- Check CORS settings in Supabase
-- Inspect network tab for failed requests
-
-### Runtime Errors
-
-**Supabase connection failed:**
-```bash
-# Check environment variables
-console.log(import.meta.env.VITE_SUPABASE_URL);
-
-# Verify in Supabase Dashboard:
-# 1. Project is active
-# 2. API keys are correct
-# 3. URL is correct
-```
-
-**RLS Policy errors:**
-```bash
-# Check policies in Supabase Dashboard:
-# Tables → Select table → Policies
-
-# Common fix: Ensure policies allow user operations
-# Example: SELECT policy
-# USING (auth.uid() = user_id)
-```
-
-### Performance Issues
-
-**Slow first load:**
-- Enable caching headers (see configs)
-- Use CloudFlare CDN
-- Optimize images
-- Code splitting
-
-**Large bundle size:**
-```bash
-# Analyze bundle
+# Fix and rebuild
 npm run build
-npx vite-bundle-visualizer
-
-# Optimize: 
-# - Lazy load components
-# - Remove unused dependencies
-# - Use dynamic imports
 ```
+
+### Deployment Issues
+
+**404 on page refresh**
+
+Fix: Add redirect rules
+
+Netlify (`netlify.toml`):
+```toml
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+Vercel (`vercel.json`):
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+**Environment variables not working**
+
+1. Check prefix: Must be `VITE_`
+2. Rebuild after adding vars
+3. Clear cache and redeploy
+4. Check deployment logs
+
+**Supabase connection failed**
+
+1. Verify URL and key in env vars
+2. Check Supabase project status
+3. Test connection:
+   ```javascript
+   fetch('https://xxx.supabase.co/rest/v1/')
+   ```
+4. Check CORS settings in Supabase
+
+**Theme not persisting**
+
+1. Check `user_settings` table exists
+2. Verify RLS policies
+3. Test in incognito (rule out cache)
+4. Check browser console for errors
+5. Verify database connection in production
+
+**Database errors**
+
+**Error: relation "categories" does not exist**
+- Run migrations in Supabase Dashboard
+- Verify tables created
+
+**Error: RLS policy violation**
+- Check if user is authenticated
+- Verify policies in Supabase Dashboard
+- Test query in SQL Editor:
+  ```sql
+  SELECT * FROM categories WHERE is_default = true;
+  ```
+
+**Settings not saving**
+- Check `user_settings` table
+- Verify user can insert/update
+- Check Network tab for failed requests
+- Test in Supabase Dashboard:
+  ```sql
+  INSERT INTO user_settings (user_id, theme)
+  VALUES ('your-user-id', 'dark');
+  ```
 
 ---
 
-## Post-Deployment Checklist
+## Performance Optimization
 
-- [ ] Site loads correctly
-- [ ] All pages accessible
-- [ ] Authentication works
-- [ ] Database connections work
-- [ ] Export functionality works
-- [ ] Responsive on mobile
-- [ ] HTTPS enabled
-- [ ] Custom domain configured (if applicable)
-- [ ] Analytics setup (optional)
-- [ ] Monitoring setup (optional)
-- [ ] Backup plan in place
+### 1. Enable Compression
+
+All modern hosts (Netlify, Vercel) auto-enable:
+- Gzip
+- Brotli
+
+### 2. CDN
+
+Automatic with:
+- Netlify (global CDN)
+- Vercel (Edge Network)
+- CloudFlare (if used)
+
+### 3. Caching
+
+Vite automatically adds cache headers:
+```
+assets/*.js  - Cache: 1 year
+assets/*.css - Cache: 1 year
+index.html   - Cache: No cache
+```
+
+### 4. Lazy Loading
+
+Already implemented:
+- Code splitting
+- Dynamic imports
+- Lazy component loading
 
 ---
 
-## Monitoring & Analytics
+## Monitoring
 
-### Netlify Analytics
-- Site settings → Analytics
-- Enable (paid feature)
+### Recommended Tools
 
-### Vercel Analytics
-- Project settings → Analytics
-- Enable (free for hobby)
+1. **Uptime Monitoring**
+   - UptimeRobot (free)
+   - Better Uptime
 
-### Google Analytics
-```html
-<!-- Add to index.html -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>
-```
+2. **Error Tracking**
+   - Sentry
+   - LogRocket
 
-### Uptime Monitoring
-- [UptimeRobot](https://uptimerobot.com) (Free)
-- [Pingdom](https://www.pingdom.com)
-- [StatusCake](https://www.statuscake.com)
+3. **Analytics**
+   - Google Analytics
+   - Plausible Analytics (privacy-friendly)
 
 ---
 
-## Rollback Strategy
+## Backup & Recovery
 
-### Netlify
-```bash
-# View deployments
-netlify sites:list
+### Database Backup
 
-# Rollback to previous
-netlify rollback
-```
+1. Supabase Dashboard → Settings → Database
+2. Download backup (daily automatic backups)
+3. Store backups securely
 
-### Vercel
-```bash
-# List deployments
-vercel ls
+### Code Backup
 
-# Promote previous deployment
-vercel promote [deployment-url]
-```
-
-### Git-Based Rollback
-```bash
-# Revert to previous commit
-git revert HEAD
-git push origin main
-
-# Or reset to specific commit
-git reset --hard [commit-hash]
-git push origin main --force
-```
+1. Push to GitHub regularly
+2. Tag releases:
+   ```bash
+   git tag -a v3.0.0 -m "Production release"
+   git push origin v3.0.0
+   ```
 
 ---
 
 ## Support
 
-Need help with deployment?
-
-- 📧 Email: andreanwar713@gmail.com
-- 📚 Docs: See README.md
-- 🐛 Issues: GitHub Issues
+**Issues during deployment?**
+- Check this guide first
+- Check platform documentation
+- Open GitHub issue
+- Email: andreanwar713@gmail.com
 
 ---
 
-**Last Updated:** November 2025  
-**Version:** 2.4.0  
-**Status:** Production Ready ✅
+**Version 3.0.0** | **Last Updated: November 2025**
