@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { supabase, Transaction, Category } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { CurrencyInput } from './CurrencyInput';
 
 interface TransactionFormProps {
   transaction: Transaction | null;
@@ -17,6 +19,7 @@ export function TransactionForm({
   onCancel
 }: TransactionFormProps) {
   const { user } = useAuth();
+  const { currency } = useSettings();
   const [formData, setFormData] = useState({
     amount: transaction?.amount.toString() || '',
     type: transaction?.type || 'expense',
@@ -122,18 +125,16 @@ export function TransactionForm({
           </div>
 
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-2">
-              Jumlah (Rp)
+            <label htmlFor="amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Jumlah ({currency === 'IDR' ? 'Rp' : '$'})
             </label>
-            <input
+            <CurrencyInput
               id="amount"
-              type="number"
-              step="0.01"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, amount: value })}
               required
               min="0"
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 dark:bg-slate-700 dark:text-white"
               placeholder="0"
             />
           </div>

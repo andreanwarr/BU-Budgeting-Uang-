@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Plus, X, Check, Clock, Pencil, Trash2, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { CurrencyInput } from './CurrencyInput';
 
 interface Kasbon {
   id: string;
@@ -27,6 +29,7 @@ interface KasbonFormData {
 
 export function KasbonManager() {
   const { user } = useAuth();
+  const { currency } = useSettings();
   const [kasbons, setKasbons] = useState<Kasbon[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -400,17 +403,15 @@ export function KasbonManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nominal *
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Nominal ({currency === 'IDR' ? 'Rp' : '$'}) *
                 </label>
-                <input
-                  type="number"
+                <CurrencyInput
+                  value={formData.amount}
+                  onChange={(value) => setFormData({ ...formData, amount: value })}
                   required
                   min="0"
-                  step="1000"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                   placeholder="0"
                 />
               </div>
