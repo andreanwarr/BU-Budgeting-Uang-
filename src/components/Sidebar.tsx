@@ -64,7 +64,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-emerald-600 text-white rounded-lg shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg transition-all duration-200 active:scale-95"
+        aria-label="Toggle menu"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -72,16 +73,17 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 z-40 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } w-64 flex flex-col`}
+        className={`fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out z-40 ${
+          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0 lg:shadow-none'
+        } w-64 lg:w-72 flex flex-col`}
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
