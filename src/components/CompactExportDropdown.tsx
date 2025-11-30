@@ -31,29 +31,32 @@ export function CompactExportDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Extract date range from UI state
+  // Handles "Semua Data" case where startDate/endDate are empty strings
   const extractDateFromUI = (): { startDate: string; endDate: string; displayDate: string } => {
-    if (currentFilters?.startDate && currentFilters?.endDate) {
-      const start = currentFilters.startDate;
-      const end = currentFilters.endDate;
-
-      if (start === end) {
-        const parsedDate = new Date(start);
-        const displayDate = format(parsedDate, 'dd/MM/yyyy', { locale: id });
-        return { startDate: start, endDate: end, displayDate };
-      } else {
-        const startFormatted = format(new Date(start), 'dd/MM/yyyy', { locale: id });
-        const endFormatted = format(new Date(end), 'dd/MM/yyyy', { locale: id });
-        return {
-          startDate: start,
-          endDate: end,
-          displayDate: `${startFormatted} - ${endFormatted}`
-        };
-      }
+    // Case 1: "Semua Data" - both dates are empty
+    if (!currentFilters?.startDate || !currentFilters?.endDate) {
+      return { startDate: '', endDate: '', displayDate: 'Semua Data' };
     }
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const displayToday = format(new Date(), 'dd/MM/yyyy', { locale: id });
-    return { startDate: today, endDate: today, displayDate: displayToday };
+    const start = currentFilters.startDate;
+    const end = currentFilters.endDate;
+
+    // Case 2: Single day (start === end)
+    if (start === end) {
+      const parsedDate = new Date(start);
+      const displayDate = format(parsedDate, 'dd/MM/yyyy', { locale: id });
+      return { startDate: start, endDate: end, displayDate };
+    }
+
+    // Case 3: Date range
+    const startFormatted = format(new Date(start), 'dd/MM/yyyy', { locale: id });
+    const endFormatted = format(new Date(end), 'dd/MM/yyyy', { locale: id });
+    return {
+      startDate: start,
+      endDate: end,
+      displayDate: `${startFormatted} - ${endFormatted}`
+    };
   };
 
   const formatCurrency = (value: number) => {
@@ -95,10 +98,11 @@ export function CompactExportDropdown({
         ['Tanggal', 'Tipe', 'Kategori', 'Judul', 'Deskripsi', 'Jumlah']
       ];
 
-      const filteredTransactions = transactions.filter(
-        t => (!startDate || t.transaction_date >= startDate) &&
-             (!endDate || t.transaction_date <= endDate)
-      );
+      // Filter transactions based on date range
+      // If startDate/endDate are empty ("Semua Data"), use all transactions
+      const filteredTransactions = (startDate && endDate)
+        ? transactions.filter(t => t.transaction_date >= startDate && t.transaction_date <= endDate)
+        : transactions;
 
       filteredTransactions.forEach((t) => {
         transactionData.push([
@@ -143,10 +147,11 @@ export function CompactExportDropdown({
     try {
       const { startDate, endDate } = extractDateFromUI();
 
-      const filteredTransactions = transactions.filter(
-        t => (!startDate || t.transaction_date >= startDate) &&
-             (!endDate || t.transaction_date <= endDate)
-      );
+      // Filter transactions based on date range
+      // If startDate/endDate are empty ("Semua Data"), use all transactions
+      const filteredTransactions = (startDate && endDate)
+        ? transactions.filter(t => t.transaction_date >= startDate && t.transaction_date <= endDate)
+        : transactions;
 
       const container = document.createElement('div');
       container.style.position = 'absolute';

@@ -93,8 +93,8 @@ export function TransactionList({
       {Object.entries(groupedTransactions).map(([date, dayTransactions]) => {
         const totals = getDayTotals(dayTransactions);
         return (
-        <div key={date} className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+        <div key={date} className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-700 rounded-2xl p-4 border border-slate-200 dark:border-slate-600 shadow-sm">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-600">
             <div className="flex items-center gap-2">
               <div className="w-1 h-8 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full"></div>
               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
@@ -103,12 +103,12 @@ export function TransactionList({
             </div>
             <div className="flex items-center gap-3 text-xs">
               {totals.income > 0 && (
-                <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-semibold">
+                <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg font-semibold">
                   +{formatCurrency(totals.income)}
                 </span>
               )}
               {totals.expense > 0 && (
-                <span className="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg font-semibold">
+                <span className="px-2 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-lg font-semibold">
                   -{formatCurrency(totals.expense)}
                 </span>
               )}
@@ -122,14 +122,14 @@ export function TransactionList({
               return (
                 <div
                   key={transaction.id}
-                  className="bg-white dark:bg-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-600 dark:hover:to-slate-700 rounded-xl p-3 sm:p-4 transition-all duration-200 border-2 border-slate-100 dark:border-slate-600 hover:border-emerald-200 dark:hover:border-emerald-600 hover:shadow-md group"
+                  className="bg-white dark:bg-slate-800/50 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-700 dark:hover:to-slate-600 rounded-xl p-3 sm:p-4 transition-all duration-200 border-2 border-slate-100 dark:border-slate-600/50 hover:border-emerald-200 dark:hover:border-emerald-500 hover:shadow-md group"
                 >
                   <div className="flex items-start sm:items-center justify-between gap-2">
                     <div className="flex items-start sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
                       <div className={`p-2.5 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform ${
                         transaction.type === 'income'
-                          ? 'bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 shadow-sm'
-                          : 'bg-gradient-to-br from-rose-100 to-rose-50 text-rose-600 shadow-sm'
+                          ? 'bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/20 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                          : 'bg-gradient-to-br from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-800/20 text-rose-600 dark:text-rose-400 shadow-sm'
                       }`}>
                         <IconComponent className="w-5 h-5" />
                       </div>
@@ -140,9 +140,9 @@ export function TransactionList({
                             {transaction.title}
                           </h4>
                           {transaction.type === 'income' ? (
-                            <TrendingUp className="w-4 h-4 text-emerald-600 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                           ) : (
-                            <TrendingDown className="w-4 h-4 text-rose-600 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                            <TrendingDown className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                           )}
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -159,8 +159,8 @@ export function TransactionList({
                         <div className="mt-2 sm:hidden">
                           <span className={`font-bold text-base px-2 py-1 rounded-lg inline-block ${
                             transaction.type === 'income'
-                              ? 'text-emerald-700 bg-emerald-50'
-                              : 'text-rose-700 bg-rose-50'
+                              ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+                              : 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30'
                           }`}>
                             {transaction.type === 'income' ? '+' : '-'}
                             {formatCurrency(Number(transaction.amount))}
@@ -172,8 +172,8 @@ export function TransactionList({
                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 flex-shrink-0">
                       <span className={`hidden sm:inline font-bold text-lg whitespace-nowrap px-3 py-1.5 rounded-lg ${
                         transaction.type === 'income'
-                          ? 'text-emerald-700 bg-emerald-50'
-                          : 'text-rose-700 bg-rose-50'
+                          ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30'
+                          : 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30'
                       }`}>
                         {transaction.type === 'income' ? '+' : '-'}
                         {formatCurrency(Number(transaction.amount))}
