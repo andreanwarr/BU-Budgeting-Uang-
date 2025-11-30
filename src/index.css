@@ -11,6 +11,10 @@
     animation: slideUp 0.3s ease-out;
   }
 
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -28,6 +32,15 @@
     to {
       transform: translateY(0);
       opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
     }
   }
 }
