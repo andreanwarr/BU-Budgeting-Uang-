@@ -416,6 +416,7 @@ export function Charts() {
                 name="Pengeluaran"
                 onClick={(data) => handleCategoryClick(data.name, 'expense')}
                 cursor="pointer"
+                style={{ touchAction: 'manipulation' }}
               />
             </BarChart>
           </ResponsiveContainer>

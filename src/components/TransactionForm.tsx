@@ -20,13 +20,15 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const { user } = useAuth();
   const { currency } = useSettings();
+  // MOBILE FIX: Always default to today's date when creating new transaction
+  const todayDate = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     amount: transaction?.amount.toString() || '',
     type: transaction?.type || 'expense',
     category_id: transaction?.category_id || '',
     title: transaction?.title || '',
     description: transaction?.description || '',
-    transaction_date: transaction?.transaction_date || new Date().toISOString().split('T')[0]
+    transaction_date: transaction?.transaction_date || todayDate
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

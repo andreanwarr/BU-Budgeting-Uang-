@@ -79,11 +79,11 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Mobile: 85% width with slide-in animation */}
       <aside
         className={`fixed lg:sticky top-0 left-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out z-40 ${
           isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0 lg:shadow-none'
-        } w-64 lg:w-72 flex flex-col`}
+        } w-[85%] max-w-xs lg:w-72 flex flex-col`}
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
