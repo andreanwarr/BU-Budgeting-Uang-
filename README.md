@@ -7,7 +7,7 @@
 Aplikasi web modern untuk mengelola keuangan pribadi dengan fitur lengkap, responsive, dan dapat dikonversi menjadi APK. Dilengkapi dengan dark mode, multi-bahasa, multi-currency, dan antarmuka yang intuitif.
 
 **Versi:** 3.0.0
-**Terakhir Diperbarui:** November 2025
+**Terakhir Diperbarui:** December 2025
 **Status:** Production Ready ✅
 
 ---
@@ -107,6 +107,42 @@ Aplikasi web modern untuk mengelola keuangan pribadi dengan fitur lengkap, respo
 ---
 
 ## 🐛 Bug Fixes (v3.0.0)
+
+### Fixed: Mobile Sidebar Scrolling Issue (iOS Safari)
+**Masalah:**
+- Sidebar drawer tidak bisa di-scroll pada perangkat mobile nyata (iOS Safari)
+- Item "Mode Gelap" dan "Keluar" terpotong di bawah
+- Hanya terjadi di iOS Safari, tidak di Bolt preview
+
+**Solusi:**
+- Changed sidebar container from `h-screen` to `inset-y-0 max-h-screen`
+- Added `-webkit-overflow-scrolling: touch` for smooth iOS scrolling
+- Restructured layout with `flex-col` and proper shrink-0/flex-1 sections
+- Header & profile: fixed at top (shrink-0)
+- Navigation: scrollable middle section (flex-1 overflow-y-auto)
+- Theme/logout: fixed at bottom (shrink-0)
+- Mobile width: 80% of screen for better UX
+
+### Fixed: Default Date in Transaction Form
+**Masalah:**
+- Form "Tambah Transaksi" menampilkan tanggal lama, bukan hari ini
+- Tanggal default ter-cache dari transaksi sebelumnya
+
+**Solusi:**
+- Added dynamic `todayDate` constant that calculates fresh on every render
+- Always defaults to `new Date().toISOString().split('T')[0]` for new transactions
+- Maintains edit functionality for existing transactions
+
+### Fixed: Chart Bars Not Clickable on Mobile
+**Masalah:**
+- Bar chart di halaman Laporan tidak merespons tap pada perangkat mobile
+- Touch events tidak terdeteksi dengan benar
+
+**Solusi:**
+- Added `touch-action: manipulation` CSS globally for Recharts elements
+- Applied inline style to Bar component: `style={{ touchAction: 'manipulation' }}`
+- Added global CSS rules for `.recharts-bar-rectangle` and `.recharts-sector`
+- Touch events sekarang bekerja sempurna di iOS dan Android
 
 ### Fixed: Theme Toggle Not Working
 **Masalah:**
@@ -587,17 +623,23 @@ supabase/migrations/
 
 ## 📝 Changelog
 
-### v3.0.0 (November 2025)
+### v3.0.0 (December 2025)
+- ✅ Fixed mobile sidebar scrolling (iOS Safari)
+- ✅ Fixed default date in transaction form
+- ✅ Fixed chart bars not clickable on mobile (touch events)
 - ✅ Fixed theme toggle functionality
 - ✅ Fixed database creation issues
 - ✅ Added dark/light mode support
 - ✅ Added multi-language (EN/ID)
 - ✅ Added multi-currency (USD/IDR)
-- ✅ Added Settings page
+- ✅ Added Settings page with comprehensive About section
 - ✅ Added Quick Add button
+- ✅ Added category detail panel with clickable charts
+- ✅ Added advanced date filtering & export to Excel/Image
 - ✅ Improved state management
 - ✅ Enhanced RLS policies
 - ✅ Added comprehensive migrations
+- ✅ Fully mobile-optimized & responsive
 
 ### v2.4.0 (November 2025)
 - Monthly balance enhancement
@@ -608,4 +650,4 @@ supabase/migrations/
 
 **Made with ❤️ in Indonesia**
 
-**Version 3.0.0** | **November 2025** | **Production Ready ✅**
+**Version 3.0.0** | **December 2025** | **Production Ready ✅**

@@ -227,25 +227,47 @@ export function Settings() {
                     {language === 'en' ? 'BU - Budgeting Uang' : 'BU - Budgeting Uang'}
                   </p>
                   <p className="mt-1">
-                    {language === 'en' ? 'Version 2.0.0' : 'Versi 2.0.0'}
+                    {language === 'en' ? 'Version 3.0.0' : 'Versi 3.0.0'}
                   </p>
                 </div>
                 <p>
                   {language === 'en'
-                    ? 'A comprehensive financial management application to help you track income, expenses, and manage your budget efficiently.'
-                    : 'Aplikasi manajemen keuangan yang komprehensif untuk membantu Anda melacak pemasukan, pengeluaran, dan mengelola anggaran Anda secara efisien.'}
+                    ? 'A modern, full-featured personal finance management application built with React, TypeScript, and Supabase. Track your income and expenses with powerful analytics and beautiful visualizations.'
+                    : 'Aplikasi manajemen keuangan pribadi yang modern dan lengkap, dibangun dengan React, TypeScript, dan Supabase. Lacak pemasukan dan pengeluaran Anda dengan analitik yang powerful dan visualisasi yang indah.'}
                 </p>
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
                   <p className="font-medium text-slate-700 dark:text-slate-300">
-                    {language === 'en' ? 'Features:' : 'Fitur:'}
+                    {language === 'en' ? 'Key Features:' : 'Fitur Utama:'}
                   </p>
                   <ul className="mt-2 space-y-1 list-disc list-inside">
-                    <li>{language === 'en' ? 'Transaction tracking' : 'Pelacakan transaksi'}</li>
-                    <li>{language === 'en' ? 'Category management' : 'Manajemen kategori'}</li>
-                    <li>{language === 'en' ? 'Financial reports' : 'Laporan keuangan'}</li>
-                    <li>{language === 'en' ? 'Loan management (Kasbon)' : 'Manajemen kasbon'}</li>
-                    <li>{language === 'en' ? 'Multi-currency support' : 'Dukungan multi-mata uang'}</li>
-                    <li>{language === 'en' ? 'Dark mode' : 'Mode gelap'}</li>
+                    <li>{language === 'en' ? 'Income & expense tracking with detailed analytics' : 'Pelacakan pemasukan & pengeluaran dengan analitik detail'}</li>
+                    <li>{language === 'en' ? 'Custom category management (CRUD)' : 'Manajemen kategori kustom (CRUD)'}</li>
+                    <li>{language === 'en' ? 'Interactive charts & reports with clickable insights' : 'Grafik & laporan interaktif dengan insight yang dapat diklik'}</li>
+                    <li>{language === 'en' ? 'Loan tracking system (Kasbon)' : 'Sistem pelacakan kasbon'}</li>
+                    <li>{language === 'en' ? 'Advanced date filtering & export to Excel/Image' : 'Filter tanggal lanjutan & ekspor ke Excel/Gambar'}</li>
+                    <li>{language === 'en' ? 'Multi-currency support (IDR/USD)' : 'Dukungan multi-mata uang (IDR/USD)'}</li>
+                    <li>{language === 'en' ? 'Dark mode & bilingual (EN/ID)' : 'Mode gelap & dwi bahasa (EN/ID)'}</li>
+                    <li>{language === 'en' ? 'Profile management with avatar upload' : 'Manajemen profil dengan upload avatar'}</li>
+                    <li>{language === 'en' ? 'Fully responsive & mobile-optimized' : 'Sepenuhnya responsif & dioptimalkan untuk mobile'}</li>
+                  </ul>
+                </div>
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
+                  <p className="font-medium text-slate-700 dark:text-slate-300">
+                    {language === 'en' ? 'Tech Stack:' : 'Teknologi:'}
+                  </p>
+                  <ul className="mt-2 space-y-1 text-xs">
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                      React 18 + TypeScript + Vite
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                      Supabase (Auth, Database, Storage)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                      Tailwind CSS + Recharts
+                    </li>
                   </ul>
                 </div>
               </div>
