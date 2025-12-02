@@ -269,7 +269,7 @@ export function ImprovedChartsView() {
       )}
 
       {/* Chart */}
-      {!loading && (
+      {!loading && transactions.length > 0 && (
         <ImprovedHorizontalChart
           incomeData={chartData.incomeData}
           expenseData={chartData.expenseData}

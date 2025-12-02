@@ -34,8 +34,8 @@ export function ImprovedHorizontalChart({
     }).format(value);
   };
 
-  const activeData = activeType === 'income' ? incomeData : expenseData;
-  const sortedData = [...activeData].sort((a, b) => b.value - a.value).slice(0, 10);
+  const activeData = activeType === 'income' ? (incomeData || []) : (expenseData || []);
+  const sortedData = activeData.length > 0 ? [...activeData].sort((a, b) => b.value - a.value).slice(0, 10) : [];
   const total = activeType === 'income' ? totalIncome : totalExpense;
 
   const handleBarClick = (category: ChartData) => {

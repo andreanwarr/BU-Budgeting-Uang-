@@ -3,10 +3,15 @@ import { DatePreferencesProvider } from './contexts/DatePreferencesContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthForm } from './components/AuthForm';
 import { AuthCallback } from './components/AuthCallback';
+import { ResetPassword } from './components/ResetPassword';
 import { MainLayout } from './components/MainLayout';
 
 function AppContent() {
   const { user, loading } = useAuth();
+
+  // Check if this is a reset password page
+  const isResetPassword = window.location.pathname === '/reset-password' ||
+                          window.location.hash.includes('type=recovery');
 
   // Check if this is an auth callback (email verification)
   const isAuthCallback = window.location.pathname === '/auth/callback' ||
@@ -21,6 +26,11 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  // Show reset password page
+  if (isResetPassword) {
+    return <ResetPassword />;
   }
 
   // Show callback page for email verification

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, UserPlus, Wallet, AlertCircle, CheckCircle, Mail } from 'lucide-react';
+import { LogIn, UserPlus, Wallet, AlertCircle, CheckCircle, Mail, KeyRound } from 'lucide-react';
 import { validateEmailDomain, getPasswordStrength } from '../utils/emailValidation';
+import { supabase } from '../lib/supabase';
 
 export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,6 +15,9 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signUp, resendVerificationEmail } = useAuth();
 
   useEffect(() => {
@@ -85,6 +89,33 @@ export function AuthForm() {
             setError(error.message);
           }
         }
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        if (error.message.includes('User not found')) {
+          setError('Email tidak terdaftar.');
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setResetEmailSent(true);
+        setForgotPasswordEmail('');
       }
     } catch (err) {
       setError('Terjadi kesalahan. Silakan coba lagi.');
@@ -178,6 +209,21 @@ export function AuthForm() {
                   }`}>
                     Password {passwordStrength === 'weak' ? 'lemah' : passwordStrength === 'medium' ? 'cukup kuat' : 'kuat'}
                   </p>
+                </div>
+              )}
+              {!isSignUp && (
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                      setError('');
+                      setResetEmailSent(false);
+                    }}
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors duration-200"
+                  >
+                    Lupa password?
+                  </button>
                 </div>
               )}
             </div>
@@ -293,6 +339,101 @@ export function AuthForm() {
           Aplikasi keuangan pribadi yang aman dan mudah digunakan
         </p>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => {
+            setShowForgotPassword(false);
+            setError('');
+            setResetEmailSent(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-emerald-100 rounded-xl">
+                <KeyRound className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Lupa Password?</h3>
+                <p className="text-sm text-slate-600">Atur ulang password Anda</p>
+              </div>
+            </div>
+
+            {resetEmailSent ? (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <Mail className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold mb-2">Link reset password telah dikirim!</p>
+                    <p className="text-sm mb-3">
+                      Silakan cek inbox email Anda dan klik link untuk mengatur ulang password.
+                      Jika tidak menerima email, periksa folder spam.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setResetEmailSent(false);
+                      }}
+                      className="text-sm font-semibold px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div>
+                  <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-700 mb-2">
+                    Email Akun Anda
+                  </label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                    placeholder="nama@email.com"
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setError('');
+                      setForgotPasswordEmail('');
+                    }}
+                    className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !forgotPasswordEmail}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {loading ? 'Mengirim...' : 'Kirim Link'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
