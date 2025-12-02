@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { TrendingUp, TrendingDown, Wallet, BarChart3, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, BarChart3, Download, AlertTriangle } from 'lucide-react';
 import { AdvancedDateFilter } from './AdvancedDateFilter';
 import { ImprovedHorizontalChart } from './ImprovedHorizontalChart';
+import { ErrorBoundary } from './ErrorBoundary';
 import * as XLSX from 'xlsx';
 
 interface Transaction {
@@ -36,6 +37,7 @@ export function ImprovedChartsView() {
     end: null,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -47,42 +49,64 @@ export function ImprovedChartsView() {
     if (!user) return;
 
     setLoading(true);
+    setError(null);
 
-    let query = supabase
-      .from('transactions')
-      .select(`
-        *,
-        category:categories(*)
-      `)
-      .eq('user_id', user.id);
+    try {
+      let query = supabase
+        .from('transactions')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .eq('user_id', user.id);
 
-    if (dateFilter.start && dateFilter.end) {
-      query = query
-        .gte('transaction_date', dateFilter.start)
-        .lte('transaction_date', dateFilter.end);
+      if (dateFilter.start && dateFilter.end) {
+        query = query
+          .gte('transaction_date', dateFilter.start)
+          .lte('transaction_date', dateFilter.end);
+      }
+
+      const { data, error } = await query.order('transaction_date', { ascending: false });
+
+      if (error) {
+        console.error('Error loading transactions:', error);
+        setError('Gagal memuat data transaksi. Silakan coba lagi.');
+        setTransactions([]);
+      } else if (data) {
+        setTransactions(data as Transaction[]);
+      }
+    } catch (err) {
+      console.error('Unexpected error loading transactions:', err);
+      setError('Terjadi kesalahan tidak terduga. Silakan muat ulang halaman.');
+      setTransactions([]);
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error } = await query.order('transaction_date', { ascending: false });
-
-    if (!error && data) {
-      setTransactions(data as Transaction[]);
-    }
-
-    setLoading(false);
   };
 
   const chartData = useMemo(() => {
-    const incomeByCategory: Record<string, number> = {};
-    const expenseByCategory: Record<string, number> = {};
+    try {
+      const incomeByCategory: Record<string, number> = {};
+      const expenseByCategory: Record<string, number> = {};
 
-    transactions.forEach((t) => {
-      const categoryName = t.category?.name || 'Lainnya';
-      if (t.type === 'income') {
-        incomeByCategory[categoryName] = (incomeByCategory[categoryName] || 0) + Number(t.amount);
-      } else {
-        expenseByCategory[categoryName] = (expenseByCategory[categoryName] || 0) + Number(t.amount);
+      if (!Array.isArray(transactions)) {
+        return { incomeData: [], expenseData: [], totalIncome: 0, totalExpense: 0 };
       }
-    });
+
+      transactions.forEach((t) => {
+        if (!t || typeof t !== 'object') return;
+
+        const categoryName = t.category?.name || 'Lainnya';
+        const amount = Number(t.amount);
+
+        if (isNaN(amount)) return;
+
+        if (t.type === 'income') {
+          incomeByCategory[categoryName] = (incomeByCategory[categoryName] || 0) + amount;
+        } else if (t.type === 'expense') {
+          expenseByCategory[categoryName] = (expenseByCategory[categoryName] || 0) + amount;
+        }
+      });
 
     const incomeData = Object.entries(incomeByCategory).map(([name, value], index) => ({
       name,
@@ -109,7 +133,11 @@ export function ImprovedChartsView() {
       item.percentage = totalExpense > 0 ? (item.value / totalExpense) * 100 : 0;
     });
 
-    return { incomeData, expenseData, totalIncome, totalExpense };
+      return { incomeData, expenseData, totalIncome, totalExpense };
+    } catch (err) {
+      console.error('Error processing chart data:', err);
+      return { incomeData: [], expenseData: [], totalIncome: 0, totalExpense: 0 };
+    }
   }, [transactions]);
 
   const formatCurrency = (value: number) => {
@@ -261,25 +289,67 @@ export function ImprovedChartsView() {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-1">
+                Terjadi Kesalahan
+              </h3>
+              <p className="text-red-700 dark:text-red-300 text-sm mb-3">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  loadTransactions();
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Loading State */}
-      {loading && (
+      {loading && !error && (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
         </div>
       )}
 
       {/* Chart */}
-      {!loading && transactions.length > 0 && (
-        <ImprovedHorizontalChart
-          incomeData={chartData.incomeData}
-          expenseData={chartData.expenseData}
-          totalIncome={chartData.totalIncome}
-          totalExpense={chartData.totalExpense}
-        />
+      {!loading && !error && transactions.length > 0 && (
+        <ErrorBoundary
+          fallback={
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-1">
+                    Grafik Tidak Dapat Dimuat
+                  </h3>
+                  <p className="text-red-700 dark:text-red-300 text-sm">
+                    Terjadi kesalahan saat menampilkan grafik. Silakan muat ulang halaman.
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <ImprovedHorizontalChart
+            incomeData={chartData.incomeData}
+            expenseData={chartData.expenseData}
+            totalIncome={chartData.totalIncome}
+            totalExpense={chartData.totalExpense}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Empty State */}
-      {!loading && transactions.length === 0 && (
+      {!loading && !error && transactions.length === 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-12 text-center">
           <BarChart3 className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">

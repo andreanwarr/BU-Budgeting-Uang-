@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, X, Info } from 'lucide-react';
 
 interface ChartData {
@@ -26,21 +26,48 @@ export function ImprovedHorizontalChart({
   const [selectedCategory, setSelectedCategory] = useState<ChartData | null>(null);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    try {
+      const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(safeValue);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return 'Rp 0';
+    }
   };
 
-  const activeData = activeType === 'income' ? (incomeData || []) : (expenseData || []);
-  const sortedData = activeData.length > 0 ? [...activeData].sort((a, b) => b.value - a.value).slice(0, 10) : [];
-  const total = activeType === 'income' ? totalIncome : totalExpense;
+  const safeIncomeData = Array.isArray(incomeData) ? incomeData : [];
+  const safeExpenseData = Array.isArray(expenseData) ? expenseData : [];
+  const activeData = activeType === 'income' ? safeIncomeData : safeExpenseData;
+  const sortedData = activeData.length > 0 ? [...activeData].sort((a, b) => (b?.value || 0) - (a?.value || 0)).slice(0, 10) : [];
+  const total = activeType === 'income' ? (totalIncome || 0) : (totalExpense || 0);
 
   const handleBarClick = (category: ChartData) => {
-    setSelectedCategory(category);
+    try {
+      if (category && typeof category === 'object' && category.name) {
+        setSelectedCategory(category);
+      } else {
+        console.warn('Invalid category data:', category);
+      }
+    } catch (error) {
+      console.error('Error handling bar click:', error);
+    }
   };
+
+  useEffect(() => {
+    if (selectedCategory) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedCategory]);
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -173,11 +200,13 @@ export function ImprovedHorizontalChart({
       {/* Modal for Category Details */}
       {selectedCategory && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          style={{ animation: 'fadeIn 0.2s ease-out' }}
           onClick={() => setSelectedCategory(null)}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-slideUp"
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+            style={{ animation: 'slideUp 0.3s ease-out' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -194,7 +223,7 @@ export function ImprovedHorizontalChart({
                     <TrendingDown className="w-8 h-8" />
                   )}
                   <div>
-                    <h3 className="text-2xl font-bold">{selectedCategory.name}</h3>
+                    <h3 className="text-2xl font-bold">{selectedCategory?.name || 'Kategori'}</h3>
                     <p className="text-white/80 text-sm">
                       {activeType === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                     </p>
@@ -212,11 +241,11 @@ export function ImprovedHorizontalChart({
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
                   <p className="text-white/70 text-xs mb-1">Total</p>
-                  <p className="font-bold text-lg">{formatCurrency(selectedCategory.value)}</p>
+                  <p className="font-bold text-lg">{formatCurrency(selectedCategory?.value || 0)}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
                   <p className="text-white/70 text-xs mb-1">Persentase</p>
-                  <p className="font-bold text-lg">{selectedCategory.percentage.toFixed(1)}%</p>
+                  <p className="font-bold text-lg">{(selectedCategory?.percentage || 0).toFixed(1)}%</p>
                 </div>
               </div>
             </div>
@@ -227,7 +256,7 @@ export function ImprovedHorizontalChart({
                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Kontribusi dari total</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {formatCurrency(selectedCategory.value)} / {formatCurrency(total)}
+                    {formatCurrency(selectedCategory?.value || 0)} / {formatCurrency(total)}
                   </span>
                 </div>
 
@@ -236,7 +265,7 @@ export function ImprovedHorizontalChart({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-slate-500 dark:text-slate-400">Proporsi</span>
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {selectedCategory.percentage.toFixed(2)}%
+                      {(selectedCategory?.percentage || 0).toFixed(2)}%
                     </span>
                   </div>
                   <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -246,7 +275,7 @@ export function ImprovedHorizontalChart({
                           ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
                           : 'bg-gradient-to-r from-red-500 to-pink-600'
                       }`}
-                      style={{ width: `${selectedCategory.percentage}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, selectedCategory?.percentage || 0))}%` }}
                     />
                   </div>
                 </div>
